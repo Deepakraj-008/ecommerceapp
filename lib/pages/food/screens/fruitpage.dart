@@ -39,91 +39,123 @@ class _FruitspagesState extends State<Fruitspages> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         title: Text("Popular Foods"),
         centerTitle: true,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2),
-              scrollDirection: Axis.vertical,
-              itemCount: fruits.length,
-              itemBuilder: (context, index) {
-                final fruit = fruits[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                        context, MaterialPageRoute(builder: (context)=> DetailsPage(id: fruit.id)));
-                  },
-                  child:  Container(
-                    width: 200,
-                    child: Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      child: Stack(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Center(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Center(
-                                      child: Container(
-                                        height: 140,
-                                        width: 140,
-                                        decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            color: Colors.grey.shade100,
-                                            image: DecorationImage(
-                                                image:
-                                                    CachedNetworkImageProvider(
-                                                  fruit.imageUrl??"",
-                                                ),
-                                                fit: BoxFit.cover)),
-                                      ),
+      body: RefreshIndicator(
+        onRefresh: () async {},
+        child: isLoading 
+        ? Center(child: CircularProgressIndicator())
+        : Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisSpacing: 15,
+                      mainAxisSpacing: 15,
+                      childAspectRatio: 0.91,
+                      crossAxisCount: 2),
+                  scrollDirection: Axis.vertical,
+                  itemCount: fruits.length,
+                  itemBuilder: (context, index) {
+                    final fruit = fruits[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    DetailsPage(id: fruit.id)));
+                      },
+                      child: SizedBox(
+                        width: 140,
+                        child: Card(
+                            shadowColor: Colors.blueGrey,
+                          borderOnForeground: true,
+                          color: Colors.white,
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                                  ClipRRect(
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(15),
+                                    topRight: Radius.circular(15),
+                                  ),
+                                  child: CachedNetworkImage(
+                                    imageUrl: fruit.imageUrl ?? "",
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: 100,
+                                  ),
+                                  ),
+                                  Padding(
+                                  padding: const EdgeInsets.only(left: 10.0,top: 10),
+                                  child: Text(
+                                    fruit.name ?? ' ',
+                                    style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  Center(
-                                    child: Text(fruit.name ?? '',
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold)),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Center(
-                                    child: Text('Only \$${fruit.price}',
-                                        style: const TextStyle(fontSize: 14)),
+                              const SizedBox(height: 4),
+                                Padding(
+                                padding: const EdgeInsets.only(left: 10.0),
+                                child: RichText(
+                                  text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                    text: 'Price ',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black,
+                                    ),
+                                    ),
+                                    TextSpan(
+                                    text: '\$',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    ),
+                                    TextSpan(
+                                    text: '${fruit.price}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    ),
+                                  ],
                                   ),
-                                  const SizedBox(height: 8),
-                                ],
-                              ),
-                            ),
+                                ),
+                                ),
+                              const SizedBox(height: 8),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-                );
-              },
+                  
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

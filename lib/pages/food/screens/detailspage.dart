@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:ecommerceapp/pages/home/models/Fruitsmodel.dart';
 import 'package:ecommerceapp/pages/home/screens/addproducts.dart';
+import 'package:ecommerceapp/pages/home/screens/homescreen.dart';
 import 'package:flutter/material.dart';
 
 class DetailsPage extends StatefulWidget {
@@ -68,9 +69,8 @@ class _DetailsPageState extends State<DetailsPage> {
                   // Refresh details after update
                   await fetchdetailsFruits();
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Updated successfully!')),
-                    );
+                      Navigator.push(context,
+                MaterialPageRoute(builder: (context) => Homescreenpage()));
                   }
                 }
               } else if (value == 'delete') {
@@ -95,7 +95,9 @@ class _DetailsPageState extends State<DetailsPage> {
                 if (confirmed == true) {
                   try {
                     await Dio().delete('http://192.168.29.208:8000/api/products/${widget.id}/');
-                    if (mounted) Navigator.pop(context); // Go back after delete
+                    if (mounted) Navigator.pop(context); 
+                      Navigator.push(context,
+                MaterialPageRoute(builder: (context) => Homescreenpage()));// Go back after delete
                   } catch (e) {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -119,14 +121,14 @@ class _DetailsPageState extends State<DetailsPage> {
           ),
         ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+      body: isLoading 
+      ? Center(child: CircularProgressIndicator())
+      : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    height: 250,
+                    height: 290,
                     width: MediaQuery.of(context).size.width,
                     margin: const EdgeInsets.all(16),
                     decoration: BoxDecoration(

@@ -6,13 +6,22 @@ import 'package:ecommerceapp/pages/food/screens/detailspage.dart';
 import 'package:ecommerceapp/pages/food/screens/fruitpage.dart';
 import 'package:ecommerceapp/pages/home/models/Fruitsmodel.dart';
 import 'package:ecommerceapp/pages/home/screens/addproducts.dart';
+import 'package:ecommerceapp/pages/home/screens/searchpage.dart';
 import 'package:flutter/material.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 class Homescreenpage extends StatefulWidget {
   const Homescreenpage({super.key});
 
   @override
   State<Homescreenpage> createState() => _HomescreenpageState();
+}
+
+num _parsePrice(dynamic price) {
+  if (price == null) return 0;
+  if (price is num) return price;
+  if (price is String) return num.tryParse(price) ?? 0;
+  return 0;
 }
 
 class _HomescreenpageState extends State<Homescreenpage> {
@@ -46,32 +55,27 @@ class _HomescreenpageState extends State<Homescreenpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: Column(children: [
-              // Header and Search
-              Row(
-                children: [
-                  _circleIcon(Icons.menu),
-                  const Spacer(),
-                  _circleIcon(Icons.person),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _searchBar(),
-
-              const SizedBox(height: 20),
-              _bannerImage(),
-
-              const SizedBox(height: 20),
-              _sectionHeader(),
-
-              const SizedBox(height: 20),
-              isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _fruitsList()
-            ]),
+        body: RefreshIndicator(
+        onRefresh: () async {},
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: Column(children: [
+              
+                const SizedBox(height: 20),
+                   _searchBar(),
+          
+                const SizedBox(height: 20),
+                _bannerImage(),
+          
+                const SizedBox(height: 20),
+                _sectionHeader(),
+          
+                const SizedBox(height: 20),
+                     _fruitsList()
+              ]),
+            ),
           ),
         ),
         floatingActionButton: _addFruit());
@@ -112,51 +116,171 @@ class _HomescreenpageState extends State<Homescreenpage> {
     return Row(
       children: [
         Expanded(
+          child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+          builder: (context) => SearchPage(fruits: fruits),
+            ),
+          );
+        },
+        child: AbsorbPointer(
           child: Container(
             height: 50,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: const Color(0xFFB5B5B5).withOpacity(0.2),
+          borderRadius: BorderRadius.circular(10),
+          color: const Color(0xFFB5B5B5).withOpacity(0.2),
             ),
             child: Row(
-              children: [
-                const SizedBox(width: 10),
-                const Icon(Icons.search),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Search...',
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          children: [
+            const SizedBox(width: 10),
+            const Icon(Icons.search),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+            controller: _controller,
+            decoration: const InputDecoration(
+              hintText: 'Search...',
+              border: OutlineInputBorder(
+                borderSide: BorderSide.none,
+              ),
+            ),
+            enabled: false, // disables editing
+              ),
+            ),
+          ],
             ),
           ),
         ),
+          ),
+        ),
         const SizedBox(width: 16),
-        _circleIcon(Icons.menu),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.sort),
+          onSelected: (value) {
+            setState(() {
+                if (value == 'Alphabetical') {
+                fruits.sort((a, b) {
+                  final nameA = (a.name ?? '').toLowerCase();
+                  final nameB = (b.name ?? '').toLowerCase();
+                  return nameA.compareTo(nameB);
+                });
+              } else if (value == 'Low to High') {
+                fruits.sort((a, b) => _parsePrice(a.price).compareTo(_parsePrice(b.price)));
+              } else if (value == 'High to Low') {
+                fruits.sort((a, b) => _parsePrice(b.price).compareTo(_parsePrice(a.price)));
+              } else if (value == 'All') {
+                fetchFruits(); // reload original order
+              }
+            });
+          },
+          itemBuilder: (context) => [
+            
+            const PopupMenuItem(
+              value: 'Alphabetical',
+              child: Text('Alphabetical'),
+            ),
+            const PopupMenuItem(
+              value: 'High to Low',
+              child: Text('High to Low'),
+            ),
+            const PopupMenuItem(
+              value: 'Low to High',
+              child: Text('Low to High'),
+            ),
+            const PopupMenuItem(
+              value: 'All',
+              child: Text('All'),
+            ),
+          ],
+        ),
+        const SizedBox(width: 8),
       ],
     );
   }
 
   Widget _bannerImage() {
-    return Container(
-      height: 230,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        image: const DecorationImage(
-          image: AssetImage("assets/images/image1.jpg"),
-          fit: BoxFit.cover,
+    final List<String> images = [
+      "assets/images/image1.jpg",
+      "assets/images/image2.jpg",
+      "assets/images/image3.jpg",
+      "assets/images/image4.jpg",
+    ];
+
+    int _current = 0;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+      return Column(
+        children: [
+        SizedBox(
+          height: 230,
+          width: double.infinity,
+          child: CarouselSlider(
+          options: CarouselOptions(
+            height: 170,
+            autoPlay: true,
+            enlargeCenterPage: true,
+            viewportFraction: 0.92,
+            autoPlayInterval: Duration(seconds: 3),
+            autoPlayAnimationDuration: Duration(milliseconds: 800),
+            onPageChanged: (index, reason) {
+            setState(() {
+              _current = index;
+            });
+            },
+            initialPage: _current,
+          ),
+          items: images.map((img) {
+            return Builder(
+            builder: (BuildContext context) {
+              return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                image: DecorationImage(
+                image: AssetImage(img),
+                fit: BoxFit.cover,
+                ),
+              ),
+              );
+            },
+            );
+          }).toList(),
+          ),
         ),
-      ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: images.asMap().entries.map((entry) {
+          return GestureDetector(
+            onTap: () {
+            setState(() {
+              _current = entry.key;
+            });
+           
+            },
+            child: Container(
+            width: 10.0,
+            height: 10.0,
+            margin: const EdgeInsets.symmetric(horizontal: 4.0),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _current == entry.key
+                ? Colors.amber
+                : Colors.grey.withOpacity(0.4),
+            ),
+            ),
+          );
+          }).toList(),
+        ),
+        ],
+      );
+      },
     );
   }
+  
 
   Widget _sectionHeader() {
     return Row(
@@ -176,7 +300,7 @@ class _HomescreenpageState extends State<Homescreenpage> {
 
   Widget _fruitsList() {
     return SizedBox(
-      height: 270,
+      height: 200,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: fruits.length,
@@ -192,48 +316,86 @@ class _HomescreenpageState extends State<Homescreenpage> {
             child: Container(
               width: 200,
               margin: const EdgeInsets.only(right: 16),
-              child: Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
+                child: SizedBox(
+                width: 140,
+                child: Card(
+                  shadowColor: Colors.blueGrey,
+                  borderOnForeground: true,
+                  color: Colors.white,
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: 140,
-                          width: 140,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: Colors.grey.shade100,
-                            image: DecorationImage(
-                              image: CachedNetworkImageProvider(
-                                fruit.imageUrl ?? "",
-                              ),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      topRight: Radius.circular(15),
+                    ),
+                    child: CachedNetworkImage(
+                      imageUrl: fruit.imageUrl ?? "",
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 100,
+                    ),
+                    ),
+                    Padding(
+                    padding: const EdgeInsets.only(left: 10.0, top: 10),
+                    child: Text(
+                      fruit.name ?? ' ',
+                      style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 8),
-                      Text(fruit.name ?? '',
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      Text('Only \$${fruit.price ?? 0.0}',
-                          style: const TextStyle(fontSize: 14)),
-                    ],
+                    ),
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    child: RichText(
+                      text: TextSpan(
+                      children: [
+                        const TextSpan(
+                        text: 'Price ',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.black,
+                        ),
+                        ),
+                        const TextSpan(
+                        text: '\$',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        ),
+                        TextSpan(
+                        text: '${fruit.price}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.orange,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        ),
+                      ],
+                      ),
+                    ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                   ),
                 ),
-              ),
+                ),
             ),
           );
         },
       ),
     );
   }
+
 }
 
 
