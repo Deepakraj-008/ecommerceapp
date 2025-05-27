@@ -29,7 +29,7 @@ class _DetailsPageState extends State<DetailsPage> {
   Future<void> fetchdetailsFruits() async {
     try {
       final response = await Dio()
-          .get('http://192.168.29.208:8000/api/products/${widget.id}/');
+          .get('http://192.168.0.20:8000/api/products/${widget.id}/');
 
       setState(() {
         fruit = Getdata.fromJson(response.data);
@@ -94,7 +94,7 @@ class _DetailsPageState extends State<DetailsPage> {
                 );
                 if (confirmed == true) {
                   try {
-                    await Dio().delete('http://192.168.29.208:8000/api/products/${widget.id}/');
+                    await Dio().delete('http://192.168.0.20:8000/api/products/${widget.id}/');
                     if (mounted) Navigator.pop(context); 
                       Navigator.push(context,
                 MaterialPageRoute(builder: (context) => Homescreenpage()));// Go back after delete

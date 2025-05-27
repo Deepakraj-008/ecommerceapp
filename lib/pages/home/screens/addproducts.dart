@@ -122,7 +122,7 @@ class _AddproductState extends State<Addproduct> {
                   filename: _image!.path.split('/').last),
           });
           response = await dio.put(
-            'http://192.168.29.208:8000/api/products/${old.id}/',
+            'http://192.168.0.20:8000/api/products/${old.id}/',
             data: formData,
             options: Options(contentType: 'multipart/form-data'),
           );
@@ -154,7 +154,7 @@ class _AddproductState extends State<Addproduct> {
                   filename: _image!.path.split('/').last),
           });
           final response = await dio.post(
-            'http://192.168.29.208:8000/api/products/',
+            'http://192.168.0.20:8000/api/products/',
             data: formData,
             options: Options(contentType: 'multipart/form-data'),
           );

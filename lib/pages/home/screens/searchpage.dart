@@ -153,7 +153,7 @@ class _SearchPageState extends State<SearchPage> {
                                 )
                               : const CircleAvatar(child: Icon(Icons.image)),
                           title: Text(fruit.name ?? ''),
-                          subtitle: Text('₹${fruit.price ?? ''}'),
+                          subtitle: Text('\$${fruit.price ?? ''}'),
                           onTap: () {
                             Navigator.push(
                               context,
