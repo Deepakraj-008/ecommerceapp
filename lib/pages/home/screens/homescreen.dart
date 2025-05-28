@@ -4,9 +4,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:ecommerceapp/pages/food/screens/detailspage.dart';
 import 'package:ecommerceapp/pages/food/screens/fruitpage.dart';
+import 'package:ecommerceapp/pages/food/screens/vegdetailpage.dart';
+import 'package:ecommerceapp/pages/food/screens/vegitablepage.dart';
 import 'package:ecommerceapp/pages/home/models/Fruitsmodel.dart';
+import 'package:ecommerceapp/pages/home/models/vegitablemodel.dart';
 import 'package:ecommerceapp/pages/home/screens/addproducts.dart';
-import 'package:ecommerceapp/pages/home/screens/searchpage.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
@@ -18,23 +20,48 @@ class Homescreenpage extends StatefulWidget {
 }
 
 class _HomescreenpageState extends State<Homescreenpage> {
-  List<Getdata> fruits = [];
+  List<Getdata> fruitss = [];
+  List<GetVegdata> veg = [];
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     fetchFruits();
+    // Future.delayed(
+    //     Duration(
+    //       seconds: 2,
+    //     ), () {
+    //   fetchFruits();
+    // });
+    fetchvegitable();
   }
 
   Future<void> fetchFruits() async {
     try {
-      final response =
-          await Dio().get('http://192.168.0.20:8000/api/products/');
+      final response = await Dio()
+          .get('http://192.168.0.14:8000/api/products/category/fruit/');
 
       setState(() {
-        fruits = getdataFromJson(jsonEncode(response.data));
-        print("$fruits");
+        fruitss = getdataFromJson(jsonEncode(response.data));
+        print(response.data);
+        print(
+            "fruis -------------------------------------------------> $fruitss");
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching fruits: $e');
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> fetchvegitable() async {
+    try {
+      final response = await Dio()
+          .get('http://192.168.0.14:8000/api/products/category/vegetable/');
+
+      setState(() {
+        veg = getVegdataFromJson(jsonEncode(response.data));
         isLoading = false;
       });
     } catch (e) {
@@ -46,50 +73,156 @@ class _HomescreenpageState extends State<Homescreenpage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: RefreshIndicator(
-          onRefresh: () async {},
-          child: SingleChildScrollView(
-            physics: AlwaysScrollableScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(18.0),
-              child: Column(children: [
-                const SizedBox(height: 30),
-                 _title() ,
-                _bannerImage(),
-                const SizedBox(height: 20),
-                _sectionHeader(),
-                const SizedBox(height: 20),
-                _fruitsList()
-              ]),
+       backgroundColor: Colors.white,
+        // appBar: AppBar(
+        //   automaticallyImplyLeading: false,
+        //   scrolledUnderElevation: 0,
+        //   centerTitle: true,
+        //   title: _title(),
+        //   bottom: PreferredSize(
+        //     preferredSize: const Size.fromHeight(10),
+        //     child: Container(
+        //       color: const Color(0xFFE7e7e7),
+        //       height: 0.5,
+        //     ),
+        //   ),
+        // ),
+      drawer: Drawer(
+        child: Column(
+          children: [
+        // Profile section (top 25%)
+        Container(
+          height: MediaQuery.of(context).size.height * 0.25,
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            color: Colors.orange,
+            borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
             ),
           ),
+          child: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+          // Profile image
+          CircleAvatar(
+            radius: 40,
+            
+           // backgroundImage: AssetImage('assets/images/Avatars4.png'),
+          ),
+          SizedBox(height: 12),
+          // User name
+          Text(
+            'Deepak Raj',
+            style: TextStyle(
+              fontSize: 20,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.1,
+            ),
+          ),
+            ],
+          ),
+        ),
+        // Drawer items
+        Expanded(
+          child: ListView(
+            children: [
+          ListTile(
+            leading: const Icon(Icons.home),
+            title: const Text('Home'),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+            },
+          ),
+          // Add more items as needed
+            ],
+          ),
+        ),
+          ],
+        ),
+      ),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: _title(),
+        leading: Builder(
+          builder: (context) => IconButton(
+        icon: const Icon(Icons.menu),
+        onPressed: () {
+          Scaffold.of(context).openDrawer();
+        },
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(10),
+          child: Container(
+        color: const Color(0xFFE7e7e7),
+        height: 0.5,
+          ),
+        ),
+     
+      ),
+        body: RefreshIndicator(
+            onRefresh: () async {
+            await fetchFruits();
+            await fetchvegitable();
+            },
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        left: 18.0, right: 18, top: 10, bottom: 18),
+                    child: Column(children: [
+                      _bannerImage(),
+                      const SizedBox(height: 20),
+                      _fruitsHeader(),
+                      const SizedBox(height: 20),
+                      Fruitsinfo(),
+                      const SizedBox(height: 20),
+                      _vegHeader(),
+                      const SizedBox(height: 20),
+                      _vegList(),
+                      const SizedBox(height: 20),
+                    ]),
+                  ),
+                ),
         ),
         floatingActionButton: _addFruit());
   }
 
-
-
   Widget _title() {
     return Text(
-      "Fruits Market",
+      "Food Market",
       style: TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.bold,
         color: Colors.orange,
-        fontFamily: 'Pacifico', // Use a beautiful font like Pacifico
+        fontFamily: 'Pacifico',
         letterSpacing: 1.2,
         shadows: [
           Shadow(
             blurRadius: 4,
             color: Colors.orangeAccent.withOpacity(0.4),
-            offset: Offset(2, 2),
+            offset: const Offset(2, 2),
           ),
         ],
       ),
     );
   }
 
- Widget _bannerImage() {
+  Widget _bannerImage() {
     final List<String> images = [
       "assets/images/image1.jpg",
       "assets/images/image2.jpg",
@@ -112,8 +245,8 @@ class _HomescreenpageState extends State<Homescreenpage> {
                   autoPlay: true,
                   enlargeCenterPage: true,
                   viewportFraction: 0.92,
-                  autoPlayInterval: Duration(seconds: 3),
-                  autoPlayAnimationDuration: Duration(milliseconds: 800),
+                  autoPlayInterval: const Duration(seconds: 3),
+                  autoPlayAnimationDuration: const Duration(milliseconds: 800),
                   onPageChanged: (index, reason) {
                     setState(() {
                       _current = index;
@@ -169,10 +302,10 @@ class _HomescreenpageState extends State<Homescreenpage> {
     );
   }
 
-  Widget _sectionHeader() {
+  Widget _fruitsHeader() {
     return Row(
       children: [
-        const Text("Popular Foods", style: TextStyle(fontSize: 24)),
+        const Text("Popular Fruits", style: TextStyle(fontSize: 24)),
         const Spacer(),
         GestureDetector(
           onTap: () {
@@ -185,20 +318,156 @@ class _HomescreenpageState extends State<Homescreenpage> {
     );
   }
 
-  Widget _fruitsList() {
+  Widget Fruitsinfo() {
+    //  print("---------------------------------first");
+    // final fruitList =
+    //     fruitss!.where((f) => (f.category ?? '') == 'Fruit').toList();
+    // //     print("---------------------------------second");
+    // if (fruitList.isEmpty) {
+    //   // print("---------------------------------third");
+    //   return const Center(child: Text("No Fruits available"));
+    //   //  print("---------------------------------four");
+    // }
+    return fruitss.isEmpty
+        ? const CircularProgressIndicator()
+        : SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: fruitss.length,
+              itemBuilder: (context, index) {
+                final fruit = fruitss[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => DetailsPage(id: fruit.id)));
+                  },
+                  child: Container(
+                    width: 200,
+                    margin: const EdgeInsets.only(right: 16),
+                    child: SizedBox(
+                      width: 140,
+                      child: Card(
+                        shadowColor: Colors.blueGrey,
+                        borderOnForeground: true,
+                        color: Colors.white,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(15),
+                                topRight: Radius.circular(15),
+                              ),
+                              child: CachedNetworkImage(
+                                imageUrl: fruit.imageUrl ?? "",
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 100,
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.error),
+                              ),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 10.0, top: 10),
+                              child: Text(
+                                fruit.name ?? ' ',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 10.0),
+                              child: RichText(
+                                text: TextSpan(
+                                  children: [
+                                    const TextSpan(
+                                      text: 'Price ',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text: '\$',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: '${fruit.price}',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+  }
+
+  Widget _vegHeader() {
+    return Row(
+      children: [
+        const Text("Popular Vegetables", style: TextStyle(fontSize: 24)),
+        const Spacer(),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const vegitablepages()));
+          },
+          child: const Text("See All", style: TextStyle(fontSize: 20)),
+        ),
+      ],
+    );
+  }
+
+  Widget _vegList() {
+    final vegList = veg
+        .where((f) => (f.category ?? '').toLowerCase() == 'vegetable')
+        .toList();
+    if (vegList.isEmpty) {
+      return const Center(child: Text("No vegetables available"));
+    }
     return SizedBox(
       height: 200,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: fruits.length,
+        itemCount: vegList.length,
         itemBuilder: (context, index) {
-          final fruit = fruits[index];
+          final veg = vegList[index];
           return GestureDetector(
             onTap: () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => DetailsPage(id: fruit.id)));
+                      builder: (context) => vegDetailsPage(id: veg.id)));
             },
             child: Container(
               width: 200,
@@ -222,16 +491,18 @@ class _HomescreenpageState extends State<Homescreenpage> {
                           topRight: Radius.circular(15),
                         ),
                         child: CachedNetworkImage(
-                          imageUrl: fruit.imageUrl ?? "",
+                          imageUrl: veg.imageUrl ?? "",
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: 100,
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error),
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.only(left: 10.0, top: 10),
                         child: Text(
-                          fruit.name ?? ' ',
+                          veg.name ?? ' ',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -260,7 +531,7 @@ class _HomescreenpageState extends State<Homescreenpage> {
                                 ),
                               ),
                               TextSpan(
-                                text: '${fruit.price}',
+                                text: '${veg.price}',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.orange,
@@ -283,345 +554,19 @@ class _HomescreenpageState extends State<Homescreenpage> {
     );
   }
 
-//  Widget _vegList() {
-//     return SizedBox(
-//       height: 200,
-//       child: ListView.builder(
-//         scrollDirection: Axis.horizontal,
-//         itemCount: fruits.length,
-//         itemBuilder: (context, index) {
-//           final fruit = fruits[index];
-//           return GestureDetector(
-//             onTap: () {
-//               Navigator.push(
-//                   context,
-//                   MaterialPageRoute(
-//                       builder: (context) => DetailsPage(id: fruit.id)));
-//             },
-//             child: Container(
-//               width: 200,
-//               margin: const EdgeInsets.only(right: 16),
-//               child: SizedBox(
-//                 width: 140,
-//                 child: Card(
-//                   shadowColor: Colors.blueGrey,
-//                   borderOnForeground: true,
-//                   color: Colors.white,
-//                   elevation: 2,
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(15),
-//                   ),
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       ClipRRect(
-//                         borderRadius: const BorderRadius.only(
-//                           topLeft: Radius.circular(15),
-//                           topRight: Radius.circular(15),
-//                         ),
-//                         child: CachedNetworkImage(
-//                           imageUrl: fruit.imageUrl ?? "",
-//                           fit: BoxFit.cover,
-//                           width: double.infinity,
-//                           height: 100,
-//                         ),
-//                       ),
-//                       Padding(
-//                         padding: const EdgeInsets.only(left: 10.0, top: 10),
-//                         child: Text(
-//                           fruit.name ?? ' ',
-//                           style: const TextStyle(
-//                             fontSize: 18,
-//                             fontWeight: FontWeight.bold,
-//                           ),
-//                         ),
-//                       ),
-//                       const SizedBox(height: 4),
-//                       Padding(
-//                         padding: const EdgeInsets.only(left: 10.0),
-//                         child: RichText(
-//                           text: TextSpan(
-//                             children: [
-//                               const TextSpan(
-//                                 text: 'Price ',
-//                                 style: TextStyle(
-//                                   fontSize: 14,
-//                                   color: Colors.black,
-//                                 ),
-//                               ),
-//                               const TextSpan(
-//                                 text: '\$',
-//                                 style: TextStyle(
-//                                   fontSize: 14,
-//                                   color: Colors.orange,
-//                                   fontWeight: FontWeight.bold,
-//                                 ),
-//                               ),
-//                               TextSpan(
-//                                 text: '${fruit.price}',
-//                                 style: const TextStyle(
-//                                   fontSize: 14,
-//                                   color: Colors.orange,
-//                                   fontWeight: FontWeight.bold,
-//                                 ),
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ),
-//                       const SizedBox(height: 8),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-
   Widget _addFruit() {
-    return Stack(children: [
-      Positioned(
-        bottom: 30,
-        right: 5,
-        child: FloatingActionButton(
-          tooltip: "Add Fruit",
-          onPressed: () {
-            Navigator.push(
-                context, MaterialPageRoute(builder: (context) => Addproduct()));
-          },
-          backgroundColor: Colors.amber,
-          child: const Padding(
-              padding: EdgeInsets.all(10.0), child: Icon(Icons.add)),
-        ),
-      ),
-    ]);
+    return FloatingActionButton(
+      tooltip: "Add Fruit",
+      onPressed: () async {
+        final result = await Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const Addproduct()));
+        if (result == true) {
+          fetchFruits();
+        }
+      },
+      backgroundColor: Colors.amber,
+      child:
+          const Padding(padding: EdgeInsets.all(10.0), child: Icon(Icons.add)),
+    );
   }
-
-  // Widget _circleIcon(IconData icon) {
-  //   return Container(
-  //     decoration: BoxDecoration(
-  //       borderRadius: BorderRadius.circular(10),
-  //       color: const Color(0xFFB5B5B5).withOpacity(0.2),
-  //     ),
-  //     height: 53,
-  //     width: 53,
-  //     child: Icon(icon, size: 23, color: const Color(0xFF1E1E1E)),
-  //   );
-  // }
-
 }
-
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: Padding(
-//         padding: const EdgeInsets.all(18.0),
-//         child: Column(children: [
-//           Row(
-//             children: [
-//               Container(
-//                 decoration: BoxDecoration(
-//                   borderRadius: BorderRadius.circular(10),
-//                   color: const Color(0xFFB5B5B5).withOpacity(0.2),
-//                 ),
-//                 height: 53,
-//                 width: 53,
-//                 child: const Icon(
-//                   Icons.menu,
-//                   color: Color(0xFF1E1E1E),
-//                   size: 23,
-//                 ),
-//               ),
-//               const Spacer(),
-//               Container(
-//                 decoration: BoxDecoration(
-//                   borderRadius: BorderRadius.circular(10),
-//                   color: const Color(0xFFB5B5B5).withOpacity(0.2),
-//                 ),
-//                 height: 53,
-//                 width: 53,
-//                 child: const Icon(
-//                   Icons.person,
-//                   size: 23,
-//                   color: Color(0xFF1E1E1E),
-//                 ),
-//               )
-//             ],
-//           ),
-//           const SizedBox(
-//             height: 20,
-//           ),
-//           Row(
-//             children: [
-//               Expanded(
-//                 child: Container(
-//                   height: 50,
-//                   decoration: BoxDecoration(
-//                     borderRadius: BorderRadius.circular(10),
-//                     color: const Color(0xFFB5B5B5).withOpacity(0.2),
-//                   ),
-//                   child: Row(
-//                     children: [
-//                       const SizedBox(width: 10),
-//                       const Icon(Icons.search),
-//                       const SizedBox(
-//                         width: 10,
-//                       ),
-//                       Expanded(
-//                         child: Container(
-//                           height: 30,
-//                           alignment: Alignment.centerLeft,
-//                           child: Center(
-//                             child: TextField(
-//                               controller: _controller,
-//                               textAlign: TextAlign.start,
-//                               decoration: const InputDecoration(
-//                                 hintText: 'Search...',
-//                                 border: OutlineInputBorder(
-//                                   borderSide: BorderSide.none,
-//                                 ),
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-//               const SizedBox(
-//                 width: 16,
-//               ),
-//               Container(
-//                 decoration: BoxDecoration(
-//                   borderRadius: BorderRadius.circular(10),
-//                   color: const Color(0xFFB5B5B5).withOpacity(0.2),
-//                 ),
-//                 height: 50,
-//                 width: 50,
-//                 child: const Icon(
-//                   Icons.menu,
-//                   size: 20,
-//                   color: Color(0xFF1E1E1E),
-//                 ),
-//               )
-//             ],
-//           ),
-//           const SizedBox(
-//             height: 20,
-//           ),
-//           Container(
-//             height: 230,
-//             width: double.infinity,
-//             decoration: BoxDecoration(
-//               borderRadius: BorderRadius.circular(10),
-//               image: const DecorationImage(
-//                 image: AssetImage("assets/images/image1.jpg"),
-//                 fit: BoxFit.cover,
-//               ),
-//             ),
-//           ),
-//           const SizedBox(
-//             height: 20,
-//           ),
-//           Row(
-//             children: [
-//               const Text(
-//                 "Popular Foods",
-//                 style: TextStyle(fontSize: 24),
-//               ),
-//               const Spacer(),
-//               GestureDetector(
-//                 onTap: () {
-//                   Navigator.push(context,
-//                       MaterialPageRoute(builder: (context) => Fruitspages()));
-//                 },
-//                 child: const Text(
-//                   "See All",
-//                   style: TextStyle(fontSize: 20),
-//                 ),
-//               ),
-//             ],
-//           ),
-//           const SizedBox(
-//             height: 20,
-//           ),
-//           isLoading
-//               ? const Center(child: CircularProgressIndicator())
-//               :
-//                SizedBox(
-//                   height: 270,
-//                   child: ListView.builder(
-//                     scrollDirection: Axis.horizontal,
-//                     itemCount: fruits.length,
-//                     itemBuilder: (context, index) {
-//                       final fruit = fruits[index];
-//                       return GestureDetector(
-//                          onTap: () {
-//                     Navigator.push(
-//                         context, MaterialPageRoute(builder: (context)=> DetailsPage(id:fruit.id)));
-//                   },
-//                         child: Container(
-//                           width: 200,
-//                           child: Card(
-//                             elevation: 2,
-//                             shape: RoundedRectangleBorder(
-//                                 borderRadius: BorderRadius.circular(16)),
-//                             child: Stack(
-//                               children: [
-//                                 Padding(
-//                                   padding: const EdgeInsets.all(12),
-//                                   child: Center(
-//                                     child: Column(
-//                                       crossAxisAlignment: CrossAxisAlignment.start,
-//                                       children: [
-//                                         Expanded(
-//                                           child: Center(
-//                                             child: Container(
-//                                               height: 140,
-//                                               width:140,
-//                                               decoration: BoxDecoration(
-//                                                   borderRadius:
-//                                                       BorderRadius.circular(10),
-//                                                   color: Colors.grey.shade100,
-//                                                   image: DecorationImage(
-//                                                     image: CachedNetworkImageProvider(
-//                                                       imagess!.imageUrl ?? '',
-//                                                     ),fit: BoxFit.cover
-//                                                   )),
-//                                             ),
-//                                           ),
-//                                         ),
-//                                         Center(
-//                                           child: Text(fruit.name ?? '',
-//                                               style: const TextStyle(
-//                                                   fontSize: 18,
-//                                                   fontWeight: FontWeight.bold)),
-//                                         ),
-//                                         const SizedBox(height: 4),
-//                                         Center(
-//                                           child: Text('Only \$${fruit.price}',
-//                                               style: const TextStyle(fontSize: 14)),
-//                                         ),
-//                                         const SizedBox(height: 8),
-//                                       ],
-//                                     ),
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                           ),
-//                         ),
-//                       );
-//                     },
-//                   ),
-//                 ),
-//         ]),
-//       ),
-//     );
-//   }
-// }

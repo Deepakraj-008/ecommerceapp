@@ -1,20 +1,20 @@
+import 'package:ecommerceapp/pages/home/models/vegitablemodel.dart';
 import 'package:flutter/material.dart';
-import 'package:ecommerceapp/pages/home/models/Fruitsmodel.dart';
 import 'package:ecommerceapp/pages/food/screens/detailspage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class SearchPage extends StatefulWidget {
-  final List<Getdata> fruits;
+class SearchveggPage extends StatefulWidget {
+  final List<GetVegdata> veg;
 
-  const SearchPage({super.key, required this.fruits});
+  const SearchveggPage({super.key, required this.veg});
 
   @override
-  State<SearchPage> createState() => _SearchPageState();
+  State<SearchveggPage> createState() => _SearchveggPageState();
 }
 
-class _SearchPageState extends State<SearchPage> {
-  List<Getdata> filtered = [];
+class _SearchveggPageState extends State<SearchveggPage> {
+  List<GetVegdata> filtered = [];
   final TextEditingController _searchController = TextEditingController();
   List<String> recentSearches = [];
 
@@ -36,8 +36,8 @@ class _SearchPageState extends State<SearchPage> {
       if (query.isEmpty) {
         filtered = [];
       } else {
-        filtered = widget.fruits
-            .where((fruit) => (fruit.name ?? '').toLowerCase().contains(query))
+        filtered = widget.veg
+            .where((vegitabless) => (vegitabless.name ?? '').toLowerCase().contains(query))
             .toList();
       }
     });
@@ -105,7 +105,7 @@ class _SearchPageState extends State<SearchPage> {
             child: TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                hintText: 'Search by fruit name',
+                hintText: 'Search by vegitabless name',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.search),
               ),
@@ -137,25 +137,25 @@ class _SearchPageState extends State<SearchPage> {
           if (_searchController.text.trim().isNotEmpty)
             Expanded(
               child: filtered.isEmpty
-                  ? const Center(child: Text('No fruits found'))
+                  ? const Center(child: Text('No vegitablesss found'))
                   : ListView.builder(
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
-                        final fruit = filtered[index];
+                        final vegitabless = filtered[index];
                         return ListTile(
-                          leading: fruit.imageUrl != null
+                          leading: vegitabless.imageUrl != null
                               ? CircleAvatar(
                                   backgroundImage: CachedNetworkImageProvider(
-                                      fruit.imageUrl!),
+                                      vegitabless.imageUrl!),
                                 )
                               : const CircleAvatar(child: Icon(Icons.image)),
-                          title: Text(fruit.name ?? ''),
-                          subtitle: Text('\$${fruit.price ?? ''}'),
+                          title: Text(vegitabless.name ?? ''),
+                          subtitle: Text('\$${vegitabless.price ?? ''}'),
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => DetailsPage(id: fruit.id),
+                                builder: (context) => DetailsPage(id: vegitabless.id),
                               ),
                             );
                           },

@@ -3,16 +3,18 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:ecommerceapp/pages/food/screens/detailspage.dart';
+import 'package:ecommerceapp/pages/food/screens/vegdetailpage.dart';
 import 'package:ecommerceapp/pages/home/models/Fruitsmodel.dart';
-import 'package:ecommerceapp/pages/home/screens/homescreen.dart';
+import 'package:ecommerceapp/pages/home/models/vegitablemodel.dart';
 import 'package:ecommerceapp/pages/home/screens/searchpage.dart';
+import 'package:ecommerceapp/pages/home/screens/vegsearch.dart';
 import 'package:flutter/material.dart';
 
-class Fruitspages extends StatefulWidget {
-  const Fruitspages({super.key});
+class vegitablepages extends StatefulWidget {
+  const vegitablepages({super.key});
 
   @override
-  State<Fruitspages> createState() => _FruitspagesState();
+  State<vegitablepages> createState() => _vegitablepagesState();
 }
 
 num _parsePrice(dynamic price) {
@@ -22,50 +24,49 @@ num _parsePrice(dynamic price) {
   return 0;
 }
 
-class _FruitspagesState extends State<Fruitspages> {
-  List<Getdata> fruitss = [];
+class _vegitablepagesState extends State<vegitablepages> {
+  List<GetVegdata> vegi = [];
   bool isLoading = true;
   final TextEditingController _controller = TextEditingController();
   bool shows = true; // selection mode
-  final Set<Getdata> selectedFruits = {};
+  final Set<GetVegdata> selectedvegs = {};
 
   @override
   void initState() {
     super.initState();
     fetchFruits();
+    // Do NOT call deleteselectedvegss() here!
   }
 
-  Future<void> fetchFruits() async {
-    try {
-      final response = await Dio()
-          .get('http://192.168.0.14:8000/api/products/category/fruit/');
-
-      setState(() {
-        fruitss = getdataFromJson(jsonEncode(response.data));
-        print(response.data);
-        print(
-            "fruis -------------------------------------------------> $fruitss");
-        isLoading = false;
-      });
-    } catch (e) {
-      print('Error fetching fruits: $e');
-      setState(() => isLoading = false);
-    }
+// ...existing code...
+Future<void> fetchFruits() async {
+  try {
+    final response =
+        await Dio().get('http://192.168.0.14:8000/api/products/category/vegetable/');
+    // Filter for only vegetables (assuming category is 'Vegetable' or category_id == 2)
+    final allProducts = getVegdataFromJson(jsonEncode(response.data));
+    setState(() {
+      vegi = allProducts.where((item) =>
+        (item.category?.toLowerCase() == 'vegetable') || (item.category == 2)
+      ).toList();
+      isLoading = false;
+    });
+  } catch (e) {
+    print('Error fetching fruits: $e');
+    setState(() => isLoading = false);
   }
-
-  Future<void> deleteSelectedFruits() async {
-    if (selectedFruits.isEmpty) return;
+}
+  Future<void> deleteselectedvegss() async {
+    if (selectedvegs.isEmpty) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete'),
-        content:
-            const Text('Are you sure you want to delete the selected fruits?'),
+        content: const Text('Are you sure you want to delete the selected fruits?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.push(context,
-                MaterialPageRoute(builder: (context) => Homescreenpage())),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -81,10 +82,10 @@ class _FruitspagesState extends State<Fruitspages> {
         isLoading = true;
       });
       try {
-        final ids = selectedFruits.map((fruit) => fruit.id).toList();
+        final ids = selectedvegs.map((v) => v.id).toList();
         final response = await Dio().delete(
-          'http://192.168.0.14:8000/api/products/delete/selected/',
-          data: jsonEncode({'ids': ids}),
+          'http://192.168.0.14:8000/api/products/delete/selected/', // <-- Your bulk delete endpoint
+          data: jsonEncode({'ids': ids}), 
           options: Options(
             headers: {'Content-Type': 'application/json'},
           ),
@@ -92,16 +93,16 @@ class _FruitspagesState extends State<Fruitspages> {
 
         if (response.statusCode == 200 || response.statusCode == 204) {
           setState(() {
-            fruitss.removeWhere((fruit) => ids.contains(fruit.id));
-            selectedFruits.clear();
-            shows = true;
+            vegi.removeWhere((fruit) => ids.contains(fruit.id));
+            selectedvegs.clear();
+            shows = true; // Exit selection mode
             isLoading = false;
           });
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to delete selected fruits.')),
           );
-          setState(() => isLoading = false);
+          setState(() => isLoading = false); 
         }
       } catch (e) {
         print('Error deleting selected fruits: $e');
@@ -119,7 +120,7 @@ class _FruitspagesState extends State<Fruitspages> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         scrolledUnderElevation: 0,
-        title: Text("Popular Fruits"),
+        title: Text("Popular Vegitable"),
         centerTitle: true,
         actions: [
           Row(
@@ -130,21 +131,20 @@ class _FruitspagesState extends State<Fruitspages> {
                       onChanged: (val) {
                         setState(() {
                           shows = val ?? false;
-                          selectedFruits.clear();
+                          selectedvegs.clear();
                         });
                       },
                     )
                   : Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: Colors.orange.shade100,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            '${selectedFruits.length}',
+                            '${selectedvegs.length}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.orange,
@@ -154,10 +154,10 @@ class _FruitspagesState extends State<Fruitspages> {
                         const SizedBox(width: 8),
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: selectedFruits.isEmpty
+                          onPressed: selectedvegs.isEmpty
                               ? null
                               : () async {
-                                  await deleteSelectedFruits();
+                                  await deleteselectedvegss();
                                 },
                         ),
                         IconButton(
@@ -166,7 +166,7 @@ class _FruitspagesState extends State<Fruitspages> {
                           onPressed: () {
                             setState(() {
                               shows = true;
-                              selectedFruits.clear();
+                              selectedvegs.clear();
                             });
                           },
                         ),
@@ -186,25 +186,23 @@ class _FruitspagesState extends State<Fruitspages> {
             : Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(
-                        left: 20.0, right: 15, top: 15, bottom: 15),
+                    padding: const EdgeInsets.only(left: 20.0, right: 15, top: 15, bottom: 15),
                     child: _searchBar(),
                   ),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(10.0),
                       child: GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisSpacing: 15,
-                                mainAxisSpacing: 15,
-                                childAspectRatio: 0.91,
-                                crossAxisCount: 2),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisSpacing: 15,
+                            mainAxisSpacing: 15,
+                            childAspectRatio: 0.91,
+                            crossAxisCount: 2),
                         scrollDirection: Axis.vertical,
-                        itemCount: fruitss.length,
+                        itemCount: vegi.length,
                         itemBuilder: (context, index) {
-                          final fruit = fruitss[index];
-                          final isSelected = selectedFruits.contains(fruit);
+                          final vegit = vegi[index];
+                          final isSelected = selectedvegs.contains(vegit);
 
                           return Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,25 +213,25 @@ class _FruitspagesState extends State<Fruitspages> {
                                     ? MediaQuery.of(context).size.width * 0.32
                                     : MediaQuery.of(context).size.width * 0.45,
                                 child: GestureDetector(
-                                    onLongPress: () {
-                                      setState(() {
+                                   onLongPress: () {
+                                    setState(() {
                                       shows = false;
-                                      selectedFruits.clear();
-                                      selectedFruits.add(fruit);
-                                      if (selectedFruits.isEmpty ) {
+                                       selectedvegs.clear();
+                                       selectedvegs.add(vegit);
+                                        if (selectedvegs.isEmpty ) {
                                         shows = true;
                                       }
-                                      });
+                                    });
                                     },
                                   onTap: () {
                                     if (!shows) {
                                       setState(() {
                                         if (isSelected) {
-                                          selectedFruits.remove(fruit);
+                                          selectedvegs.remove(vegit);
                                         } else {
-                                          selectedFruits.add(fruit);
-                                        } 
-                                        if (selectedFruits.isEmpty) {
+                                          selectedvegs.add(vegit);
+                                        }
+                                        if (selectedvegs.isEmpty) {
                                         shows = true;
                                         }
                                       });
@@ -241,8 +239,7 @@ class _FruitspagesState extends State<Fruitspages> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) =>
-                                              DetailsPage(id: fruit.id),
+                                          builder: (context) => vegDetailsPage(id: vegit.id),
                                         ),
                                       );
                                     }
@@ -256,8 +253,7 @@ class _FruitspagesState extends State<Fruitspages> {
                                       borderRadius: BorderRadius.circular(15),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         ClipRRect(
                                           borderRadius: BorderRadius.only(
@@ -265,17 +261,16 @@ class _FruitspagesState extends State<Fruitspages> {
                                             topRight: Radius.circular(15),
                                           ),
                                           child: CachedNetworkImage(
-                                            imageUrl: fruit.imageUrl ?? "",
+                                            imageUrl: vegit.imageUrl ?? "",
                                             fit: BoxFit.cover,
                                             width: double.infinity,
                                             height: 100,
                                           ),
                                         ),
                                         Padding(
-                                          padding: const EdgeInsets.only(
-                                              left: 10.0, top: 10),
+                                          padding: const EdgeInsets.only(left: 10.0, top: 10),
                                           child: Text(
-                                            fruit.name ?? ' ',
+                                            vegit.name ?? ' ',
                                             style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
@@ -284,8 +279,7 @@ class _FruitspagesState extends State<Fruitspages> {
                                         ),
                                         const SizedBox(height: 4),
                                         Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 10.0),
+                                          padding: const EdgeInsets.only(left: 10.0),
                                           child: RichText(
                                             text: TextSpan(
                                               children: [
@@ -305,7 +299,7 @@ class _FruitspagesState extends State<Fruitspages> {
                                                   ),
                                                 ),
                                                 TextSpan(
-                                                  text: '${fruit.price}',
+                                                  text: '${vegit.price}',
                                                   style: const TextStyle(
                                                     fontSize: 14,
                                                     color: Colors.orange,
@@ -325,16 +319,15 @@ class _FruitspagesState extends State<Fruitspages> {
                               if (!shows)
                                 Expanded(
                                   child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 4.0, top: 20),
+                                    padding: const EdgeInsets.only(left: 4.0, top: 20),
                                     child: Checkbox(
                                       value: isSelected,
                                       onChanged: (val) {
                                         setState(() {
                                           if (val == true) {
-                                            selectedFruits.add(fruit);
+                                            selectedvegs.add(vegit);
                                           } else {
-                                            selectedFruits.remove(fruit);
+                                            selectedvegs.remove(vegit);
                                           }
                                         });
                                       },
@@ -362,7 +355,7 @@ class _FruitspagesState extends State<Fruitspages> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => SearchPage(fruits: fruitss),
+                  builder: (context) => SearchveggPage(veg: vegi ),
                 ),
               );
             },
@@ -387,7 +380,7 @@ class _FruitspagesState extends State<Fruitspages> {
                             borderSide: BorderSide.none,
                           ),
                         ),
-                        enabled: false,
+                        enabled: false, // disables editing
                       ),
                     ),
                   ],
@@ -402,19 +395,19 @@ class _FruitspagesState extends State<Fruitspages> {
           onSelected: (value) {
             setState(() {
               if (value == 'Alphabetical') {
-                fruitss.sort((a, b) {
+                vegi.sort((a, b) {
                   final nameA = (a.name ?? '').toLowerCase();
                   final nameB = (b.name ?? '').toLowerCase();
                   return nameA.compareTo(nameB);
                 });
               } else if (value == 'Low to High') {
-                fruitss.sort((a, b) =>
+                vegi.sort((a, b) =>
                     _parsePrice(a.price).compareTo(_parsePrice(b.price)));
               } else if (value == 'High to Low') {
-                fruitss.sort((a, b) =>
+                vegi.sort((a, b) =>
                     _parsePrice(b.price).compareTo(_parsePrice(a.price)));
               } else if (value == 'All') {
-                fetchFruits();
+                fetchFruits(); // reload original order
               }
             });
           },

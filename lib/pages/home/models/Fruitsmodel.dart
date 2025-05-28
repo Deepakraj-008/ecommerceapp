@@ -14,6 +14,7 @@ class Getdata {
     String? description;
     String? price;
     String? imageUrl;
+    Category? category;
 
     Getdata({
         this.id,
@@ -21,6 +22,7 @@ class Getdata {
         this.description,
         this.price,
         this.imageUrl,
+        this.category,
     });
 
     factory Getdata.fromJson(Map<String, dynamic> json) => Getdata(
@@ -29,6 +31,7 @@ class Getdata {
         description: json["description"],
         price: json["price"],
         imageUrl: json["image_url"],
+        category: categoryValues.map[json["category"]]!,
     );
 
     Map<String, dynamic> toJson() => {
@@ -37,5 +40,26 @@ class Getdata {
         "description": description,
         "price": price,
         "image_url": imageUrl,
+        "category": categoryValues.reverse[category],
     };
+}
+
+enum Category {
+    FRUIT
+}
+
+final categoryValues = EnumValues({
+    "Fruit": Category.FRUIT
+});
+
+class EnumValues<T> {
+    Map<String, T> map;
+    late Map<T, String> reverseMap;
+
+    EnumValues(this.map);
+
+    Map<T, String> get reverse {
+            reverseMap = map.map((k, v) => MapEntry(v, k));
+            return reverseMap;
+    }
 }
